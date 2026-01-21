@@ -26,8 +26,12 @@ app.add_exception_handler(Exception, general_exception_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=[
+        "http://localhost:5173",
+        "https://task-agent-ai-wheat.vercel.app",
+        "https://task-agent-ai.onrender.com",
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
