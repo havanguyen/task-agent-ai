@@ -1,9 +1,6 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
-// Use environment variable for API URL
-// In development (localhost): VITE_API_URL=http://localhost:8000/api/v1
-// In production (Vercel): VITE_API_URL=https://task-agent-ai.onrender.com/api/v1
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://task-agent-ai.onrender.com/api/v1'
 
 const http = axios.create({
@@ -14,7 +11,6 @@ const http = axios.create({
     }
 })
 
-// Request interceptor - add auth token
 http.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token')
@@ -26,7 +22,6 @@ http.interceptors.request.use(
     (error) => Promise.reject(error)
 )
 
-// Response interceptor - handle errors
 http.interceptors.response.use(
     (response) => response,
     (error) => {
