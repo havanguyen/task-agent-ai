@@ -33,7 +33,13 @@ class Settings(BaseSettings):
     def SQLALCHEMY_DATABASE_URI(self) -> str:
         if self.DATABASE_URL:
             return self.DATABASE_URL
-        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+
+        from urllib.parse import quote_plus
+
+        encoded_user = quote_plus(self.POSTGRES_USER)
+        encoded_password = quote_plus(self.POSTGRES_PASSWORD)
+
+        return f"postgresql://{encoded_user}:{encoded_password}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
     # Redis
     REDIS_HOST: str = "localhost"

@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://task-agent-ai.onrender.com/api/v1'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://task-agent-ai-z6og.vercel.app/api/v1'
 
 const http = axios.create({
     baseURL: API_BASE_URL,
