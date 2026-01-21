@@ -105,7 +105,12 @@ async function handleRegister() {
   }
   loading.value = true
   try {
-    await authStore.register(registerForm)
+    await authStore.register(
+      registerForm.organization_name,
+      registerForm.email,
+      registerForm.password,
+      registerForm.full_name
+    )
     ElMessage.success('Account created! Please sign in.')
     activeTab.value = 'login'
     loginForm.email = registerForm.email
