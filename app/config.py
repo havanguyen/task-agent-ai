@@ -8,21 +8,21 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "River Flow Task Management"
     API_V1_STR: str = "/api/v1"
 
-
-    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000", "http://localhost:8000"]
+    BACKEND_CORS_ORIGINS: List[str] = ["*"]
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
         if v is None or v == "":
-            return ["http://localhost:5173", "http://localhost:3000", "http://localhost:8000"]
+            return ["*"]
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",") if i.strip()]
         elif isinstance(v, (list, str)):
             return v
         raise ValueError(v)
 
-    # Database
+    # Database - supports both DATABASE_URL (cloud) or individual settings (local)
+    DATABASE_URL: Optional[str] = None
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
@@ -31,6 +31,8 @@ class Settings(BaseSettings):
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
+        if self.DATABASE_URL:
+            return self.DATABASE_URL
         return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
     # Redis
