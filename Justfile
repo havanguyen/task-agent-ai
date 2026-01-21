@@ -38,3 +38,12 @@ agent:
 
 agent-test:
     . venv/bin/activate && python3 app/agent/agent.py test
+
+frontend-setup:
+    cd frontend && npm install
+
+frontend-dev:
+    cd frontend && npm run dev
+
+frontend-build:
+    cd frontend && npm run build
