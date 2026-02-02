@@ -143,7 +143,6 @@ def chat_with_agent(
         response = client.models.generate_content(
             model="gemini-3-flash-preview", contents=prompt
         )
-        # Try different ways to get the text from response
         response_text = None
         if hasattr(response, "text") and response.text:
             response_text = response.text

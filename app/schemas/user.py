@@ -1,10 +1,10 @@
-from typing import Optional, List
+from typing import Optional
+
 from pydantic import BaseModel, EmailStr
+
 from app.models.user import UserRole
-from app.schemas.organization import Organization
 
 
-# Shared properties
 class UserBase(BaseModel):
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = True
@@ -12,15 +12,12 @@ class UserBase(BaseModel):
     role: Optional[UserRole] = UserRole.MEMBER
     organization_id: Optional[int] = None
 
-
-# Properties to receive via API on creation
 class UserCreate(UserBase):
     email: EmailStr
     password: str
     organization_id: int
 
 
-# Properties to receive via API on update
 class UserUpdate(UserBase):
     password: Optional[str] = None
 
@@ -31,11 +28,9 @@ class UserInDBBase(UserBase):
     model_config = {"from_attributes": True}
 
 
-# Additional properties to return via API
 class User(UserInDBBase):
     pass
 
 
-# Additional properties stored in DB
 class UserInDB(UserInDBBase):
     hashed_password: str
