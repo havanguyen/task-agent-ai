@@ -1,18 +1,17 @@
-from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from pydantic import BaseModel
-from typing import Optional, List
-from google import genai
-from google.genai import types
 import json
-import re
+from datetime import datetime, timedelta
+from typing import Optional, List
+
+from fastapi import APIRouter, Depends, HTTPException
+from google import genai
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from app.api import deps
 from app.config import settings
-from app.models.user import User
-from app.models.task import Task, TaskStatus, TaskPriority
 from app.models.project import Project
+from app.models.task import Task, TaskStatus, TaskPriority
+from app.models.user import User
 
 router = APIRouter()
 

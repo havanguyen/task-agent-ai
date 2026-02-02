@@ -10,7 +10,6 @@ class Settings(BaseSettings):
 
     BACKEND_CORS_ORIGINS: List[str] = ["*"]
 
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
         if v is None or v == "":

@@ -8,7 +8,6 @@ def create_notification(db: Session, user_id: int, title: str, message: str):
     db.add(notification)
     db.commit()
     db.refresh(notification)
-    # TODO: Push to Redis if needed for real-time
     return notification
 
 
