@@ -8,8 +8,6 @@ client = TestClient(app)
 def test_health_check():
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
-
-
-# More tests would require DB mocking or a running DB container.
-# For assignment submission, we provide the structure.
+    data = response.json()
+    assert data["success"] is True
+    assert data["data"]["status"] == "ok"

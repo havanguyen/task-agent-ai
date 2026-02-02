@@ -10,8 +10,8 @@ from app.core.exceptions import (
     validation_exception_handler,
     general_exception_handler,
 )
+from app.schemas.api_response import ApiResponse
 
-# Setup logging
 setup_logging()
 
 app = FastAPI(
@@ -19,7 +19,6 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
 )
 
-# Register exception handlers
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
@@ -40,4 +39,6 @@ logger.info(f"Starting {settings.PROJECT_NAME} in {settings.ENVIRONMENT} mode")
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok"}
+    return ApiResponse.success_response(
+        data={"status": "ok"}, message="Service is healthy"
+    )

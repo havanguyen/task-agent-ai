@@ -13,7 +13,11 @@ from app.repositories import (
     project_repository,
     project_member_repository,
 )
-from app.repositories.notification_repository import create_comment, count_by_task, create_attachment
+from app.repositories.notification_repository import (
+    create_comment,
+    count_by_task,
+    create_attachment,
+)
 from app.schemas.task import TaskCreate, TaskUpdate
 from app.services.notification import create_notification
 
@@ -133,9 +137,7 @@ class TaskService:
 
         self.check_project_membership(db, user, task.project_id)
 
-        create_comment(
-            db, content=content, task_id=task_id, user_id=user.id
-        )
+        create_comment(db, content=content, task_id=task_id, user_id=user.id)
         db.commit()
 
         if task.assignee_id and task.assignee_id != user.id:
@@ -153,7 +155,6 @@ class TaskService:
     def add_attachment(
         self, db: Session, user: User, task_id: int, file: UploadFile
     ) -> dict:
-        """Add an attachment to a task with validation."""
         task = task_repository.get(db, task_id)
         if not task:
             raise HTTPException(status_code=404, detail="Task not found")
@@ -202,5 +203,6 @@ class TaskService:
             raise HTTPException(
                 status_code=400, detail="Cannot move task status backward"
             )
+
 
 task_service = TaskService()

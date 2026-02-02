@@ -1,7 +1,3 @@
-"""
-Global Exception Handler and API Response Format
-"""
-
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -14,8 +10,6 @@ logger = logging.getLogger("app")
 
 
 class ApiResponse(BaseModel):
-    """Standard API Response Format"""
-
     success: bool
     message: str
     data: Optional[Any] = None
@@ -29,7 +23,6 @@ def create_response(
     errors: list = None,
     status_code: int = 200,
 ) -> JSONResponse:
-    """Create a standardized JSON response"""
     return JSONResponse(
         status_code=status_code,
         content={
@@ -42,7 +35,6 @@ def create_response(
 
 
 async def http_exception_handler(request: Request, exc: HTTPException):
-    """Handle HTTP exceptions"""
     logger.warning(f"HTTP {exc.status_code}: {exc.detail} - {request.url}")
     return create_response(
         success=False, message=str(exc.detail), status_code=exc.status_code
@@ -50,7 +42,6 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """Handle validation errors"""
     errors = []
     for error in exc.errors():
         field = ".".join(str(loc) for loc in error["loc"])
@@ -63,7 +54,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 async def general_exception_handler(request: Request, exc: Exception):
-    """Handle unexpected exceptions"""
     logger.error(f"Unhandled exception: {exc} - {request.url}", exc_info=True)
     return create_response(
         success=False, message="Internal server error", status_code=500

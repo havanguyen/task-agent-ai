@@ -40,3 +40,25 @@ class Task(TaskInDBBase):
 
 class TaskInDB(TaskInDBBase):
     pass
+
+
+class CommentCreate(BaseModel):
+    content: str
+
+
+class Comment(BaseModel):
+    id: int
+    content: str
+    task_id: int
+    user_id: int
+
+    model_config = {"from_attributes": True}
+
+
+class Attachment(BaseModel):
+    id: int
+    filename: str
+    file_path: str
+    task_id: int
+
+    model_config = {"from_attributes": True}

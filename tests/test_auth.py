@@ -1,7 +1,3 @@
-"""
-Authentication and User Tests
-"""
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -13,7 +9,6 @@ from app.db.base_class import Base
 from app.api.deps import get_db
 
 
-# Create in-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite://"
 
 engine = create_engine(
@@ -32,24 +27,20 @@ def override_get_db():
         db.close()
 
 
-# Create tables
 Base.metadata.create_all(bind=engine)
 
-# Override dependency
 app.dependency_overrides[get_db] = override_get_db
 
 client = TestClient(app)
 
 
 class TestAuth:
-    """Test authentication endpoints"""
 
     def test_register_organization(self):
-        """Test organization and admin user registration"""
         response = client.post(
             "/api/v1/organizations/register",
-            params={
-                "org_name": "Test Organization",
+            json={
+                "organization_name": "Test Organization",
                 "email": "admin@testorg.com",
                 "password": "testpassword123",
                 "full_name": "Test Admin",
@@ -57,48 +48,47 @@ class TestAuth:
         )
         assert response.status_code == 200
         data = response.json()
-        assert "organization_id" in data
-        assert "user_id" in data
-        assert data["message"] == "Organization and Admin created"
+        assert data["success"] is True
+        assert "organization_id" in data["data"]
+        assert "user_id" in data["data"]
 
     def test_login_success(self):
-        """Test successful login"""
-        # First register
         client.post(
             "/api/v1/organizations/register",
-            params={
-                "org_name": "Login Test Org",
+            json={
+                "organization_name": "Login Test Org",
                 "email": "logintest@example.com",
                 "password": "password123",
                 "full_name": "Login User",
             },
         )
 
-        # Then login
         response = client.post(
             "/api/v1/auth/login",
-            data={"username": "logintest@example.com", "password": "password123"},
+            json={"email": "logintest@example.com", "password": "password123"},
         )
         assert response.status_code == 200
         data = response.json()
-        assert "access_token" in data
-        assert data["token_type"] == "bearer"
+        assert data["success"] is True
+        assert "access_token" in data["data"]
+        assert "refresh_token" in data["data"]
+        assert data["data"]["token_type"] == "bearer"
+
+        assert "ACCESS_TOKEN" in response.cookies
+        assert "REFRESH_TOKEN" in response.cookies
 
     def test_login_wrong_password(self):
-        """Test login with wrong password"""
         response = client.post(
             "/api/v1/auth/login",
-            data={"username": "admin@testorg.com", "password": "wrongpassword"},
+            json={"email": "admin@testorg.com", "password": "wrongpassword"},
         )
         assert response.status_code == 400
 
     def test_get_current_user(self):
-        """Test getting current user info"""
-        # Register and login
         client.post(
             "/api/v1/organizations/register",
-            params={
-                "org_name": "Me Test Org",
+            json={
+                "organization_name": "Me Test Org",
                 "email": "metest@example.com",
                 "password": "password123",
                 "full_name": "Me User",
@@ -107,24 +97,32 @@ class TestAuth:
 
         login_response = client.post(
             "/api/v1/auth/login",
-            data={"username": "metest@example.com", "password": "password123"},
+            json={"email": "metest@example.com", "password": "password123"},
         )
-        token = login_response.json()["access_token"]
+        token = login_response.json()["data"]["access_token"]
 
-        # Get current user
         response = client.get(
             "/api/v1/users/me", headers={"Authorization": f"Bearer {token}"}
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["email"] == "metest@example.com"
-        assert data["full_name"] == "Me User"
+        assert data["success"] is True
+        assert data["data"]["email"] == "metest@example.com"
+        assert data["data"]["full_name"] == "Me User"
+
+    def test_logout(self):
+        response = client.post("/api/v1/auth/logout")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["message"] == "Logged out successfully"
 
 
 class TestHealthCheck:
-    """Test health check endpoint"""
 
     def test_health_check(self):
         response = client.get("/health")
         assert response.status_code == 200
-        assert response.json() == {"status": "ok"}
+        data = response.json()
+        assert data["success"] is True
+        assert data["data"]["status"] == "ok"

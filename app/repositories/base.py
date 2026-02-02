@@ -11,26 +11,18 @@ UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
 
 class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
-    """
-    Base Repository with generic CRUD operations.
-    All repositories should inherit from this class.
-    """
-
     def __init__(self, model: Type[ModelType]):
         self.model = model
 
     def get(self, db: Session, id_: Any) -> Optional[ModelType]:
-        """Get a single record by ID."""
         return db.query(self.model).filter(self.model.id == id_).first()
 
     def get_multi(
         self, db: Session, *, skip: int = 0, limit: int = 100
     ) -> List[ModelType]:
-        """Get multiple records with pagination."""
         return db.query(self.model).offset(skip).limit(limit).all()
 
     def create(self, db: Session, *, obj_in: CreateSchemaType) -> ModelType:
-        """Create a new record."""
         obj_in_data = jsonable_encoder(obj_in)
         db_obj = self.model(**obj_in_data)
         db.add(db_obj)
@@ -45,7 +37,6 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         db_obj: ModelType,
         obj_in: Union[UpdateSchemaType, dict[str, Any]]
     ) -> ModelType:
-        """Update an existing record."""
         if not db_obj:
             raise ValueError("Database object cannot be None")
 
@@ -70,7 +61,6 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return db_obj
 
     def delete(self, db: Session, *, id_: int) -> Optional[ModelType]:
-        """Delete a record by ID."""
         obj = db.query(self.model).filter(self.model.id == id_).first()
         if not obj:
             return None
@@ -80,5 +70,4 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return obj
 
     def count(self, db: Session) -> int:
-        """Count all records."""
         return db.query(func.count(self.model.id)).scalar()

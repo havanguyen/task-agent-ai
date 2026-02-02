@@ -1,60 +1,47 @@
-from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api import deps
-from app.models.extras import Notification
+from app.models.extras import Notification as NotificationModel
 from app.models.user import User
-from pydantic import BaseModel
-
-
-class NotificationSchema(BaseModel):
-    id: int
-    title: str
-    message: str
-    is_read: bool
-
-    model_config = {"from_attributes": True}
-
+from app.schemas.notification import Notification
+from app.schemas.api_response import ApiResponse
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[NotificationSchema])
+@router.get("/")
 def read_notifications(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
     current_user: User = Depends(deps.get_current_active_user),
-) -> Any:
-    """
-    Get current user's notifications.
-    """
+):
     notifications = (
-        db.query(Notification)
-        .filter(Notification.user_id == current_user.id)
-        .order_by(Notification.created_at.desc())
+        db.query(NotificationModel)
+        .filter(NotificationModel.user_id == current_user.id)
+        .order_by(NotificationModel.created_at.desc())
         .offset(skip)
         .limit(limit)
         .all()
     )
-    return notifications
+    return ApiResponse.success_response(
+        data=notifications, message="Notifications retrieved successfully"
+    )
 
 
-@router.put("/{notification_id}/read", response_model=NotificationSchema)
+@router.put("/{notification_id}/read")
 def mark_notification_read(
     *,
     db: Session = Depends(deps.get_db),
     notification_id: int,
     current_user: User = Depends(deps.get_current_active_user),
-) -> Any:
-    """
-    Mark notification as read.
-    """
+):
     notification = (
-        db.query(Notification)
+        db.query(NotificationModel)
         .filter(
-            Notification.id == notification_id, Notification.user_id == current_user.id
+            NotificationModel.id == notification_id,
+            NotificationModel.user_id == current_user.id,
         )
         .first()
     )
@@ -65,4 +52,6 @@ def mark_notification_read(
     db.add(notification)
     db.commit()
     db.refresh(notification)
-    return notification
+    return ApiResponse.success_response(
+        data=notification, message="Notification marked as read"
+    )

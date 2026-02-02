@@ -1,8 +1,9 @@
-
 from sqlalchemy.orm import Session
 
 from app.models.extras import Notification
-from app.repositories import notification_repository
+from app.repositories.notification_repository import (
+    create_notification as repo_create_notification,
+)
 
 
 class NotificationService:
@@ -10,7 +11,7 @@ class NotificationService:
     def create_notification(
         self, db: Session, user_id: int, title: str, message: str
     ) -> Notification:
-        notification = create_notification(
+        notification = repo_create_notification(
             db, user_id=user_id, title=title, message=message
         )
         db.commit()
@@ -33,6 +34,7 @@ class NotificationService:
                 title="Task Status Updated",
                 message=f"Task '{task.title}' status changed to {task.status.value}",
             )
+
 
 notification_service = NotificationService()
 

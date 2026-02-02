@@ -135,35 +135,33 @@ def test_task(db_session, test_project, test_admin):
 
 @pytest.fixture
 def admin_token(client, test_admin):
-    """Get admin auth token"""
     response = client.post(
         "/api/v1/auth/login",
-        data={"username": test_admin.email, "password": "password123"},
+        json={"email": test_admin.email, "password": "password123"},
     )
-    return response.json().get("access_token")
+    return response.json()["data"].get("access_token")
 
 
 @pytest.fixture
 def member_token(client, test_member):
-    """Get member auth token"""
     response = client.post(
         "/api/v1/auth/login",
-        data={"username": test_member.email, "password": "password123"},
+        json={"email": test_member.email, "password": "password123"},
     )
-    return response.json().get("access_token")
+    return response.json()["data"].get("access_token")
 
 
 class TestTasksEndpoint:
     """Comprehensive task endpoint tests"""
 
     def test_list_tasks(self, client, admin_token, test_task):
-        """Test listing tasks"""
         response = client.get(
             "/api/v1/tasks/", headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 200
-        tasks = response.json()
-        assert isinstance(tasks, list)
+        data = response.json()
+        assert data["success"] is True
+        assert isinstance(data["data"], list)
 
     def test_list_tasks_with_project_filter(
         self, client, admin_token, test_task, test_project, db_session
@@ -231,7 +229,8 @@ class TestTasksEndpoint:
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["title"] == "New Task"
+        assert data["success"] is True
+        assert data["data"]["title"] == "New Task"
 
     def test_create_task_with_past_due_date(
         self, client, admin_token, test_project, db_session, test_admin
@@ -317,7 +316,7 @@ class TestTasksEndpoint:
         response = client.post(
             f"/api/v1/tasks/{test_task.id}/comments",
             headers={"Authorization": f"Bearer {admin_token}"},
-            params={"content": "This is a test comment"},
+            json={"content": "This is a test comment"},
         )
         assert response.status_code == 200
 
@@ -374,7 +373,9 @@ class TestProjectsEndpoint:
             "/api/v1/projects/", headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 200
-        assert isinstance(response.json(), list)
+        data = response.json()
+        assert data["success"] is True
+        assert isinstance(data["data"], list)
 
     def test_create_project(self, client, admin_token, test_org):
         """Test creating project"""
@@ -429,7 +430,7 @@ class TestProjectsEndpoint:
         response = client.post(
             f"/api/v1/projects/{test_project.id}/members",
             headers={"Authorization": f"Bearer {admin_token}"},
-            params={"user_id": test_member.id},
+            json={"user_id": test_member.id},
         )
         assert response.status_code == 200
 
@@ -474,12 +475,13 @@ class TestUsersEndpoint:
     """Comprehensive user endpoint tests"""
 
     def test_get_me(self, client, admin_token):
-        """Test getting current user"""
         response = client.get(
             "/api/v1/users/me", headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 200
-        assert "email" in response.json()
+        data = response.json()
+        assert data["success"] is True
+        assert "email" in data["data"]
 
     def test_list_users_as_admin(self, client, admin_token):
         """Test listing users as admin"""

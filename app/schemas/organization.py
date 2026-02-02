@@ -1,26 +1,28 @@
-from typing import Optional
 from pydantic import BaseModel
 
 
-class OrganizationBase(BaseModel):
-    name: Optional[str] = None
-
-class OrganizationCreate(OrganizationBase):
-    name: str
-
-
-class OrganizationUpdate(OrganizationBase):
-    pass
-
-
-class OrganizationInDBBase(OrganizationBase):
+class Organization(BaseModel):
     id: int
     name: str
+
     model_config = {"from_attributes": True}
 
 
-class Organization(OrganizationInDBBase):
-    pass
+class OrganizationCreate(BaseModel):
+    name: str
 
-class OrganizationInDB(OrganizationInDBBase):
-    pass
+
+class OrganizationUpdate(BaseModel):
+    name: str
+
+
+class RegisterRequest(BaseModel):
+    organization_name: str
+    email: str
+    password: str
+    full_name: str
+
+
+class RegisterResponse(BaseModel):
+    organization_id: int
+    user_id: int

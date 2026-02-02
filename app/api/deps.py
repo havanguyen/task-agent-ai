@@ -1,5 +1,6 @@
-from typing import Generator
-from fastapi import Depends, HTTPException, status
+from typing import Generator, Optional
+
+from fastapi import Cookie, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 from pydantic import ValidationError
@@ -11,11 +12,12 @@ from app.db.session import SessionLocal
 from app.models.user import User
 from app.schemas.token import TokenPayload
 
-reusable_oauth2 = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
+reusable_oauth2 = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_V1_STR}/auth/login", auto_error=False
+)
 
 
 def get_db() -> Generator:
-    global db
     try:
         db = SessionLocal()
         yield db
@@ -23,8 +25,24 @@ def get_db() -> Generator:
         db.close()
 
 
+def get_token_from_cookie_or_header(
+    request: Request,
+    token_header: Optional[str] = Depends(reusable_oauth2),
+    access_token: Optional[str] = Cookie(None, alias="ACCESS_TOKEN"),
+) -> str:
+    token = token_header or access_token
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return token
+
+
 def get_current_user(
-    db: Session = Depends(get_db), token: str = Depends(reusable_oauth2)
+    db: Session = Depends(get_db),
+    token: str = Depends(get_token_from_cookie_or_header),
 ) -> User:
     try:
         payload = jwt.decode(

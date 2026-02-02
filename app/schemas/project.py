@@ -1,5 +1,7 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
+
 from pydantic import BaseModel
+
 from app.schemas.user import User
 
 
@@ -30,3 +32,17 @@ class Project(ProjectInDBBase):
 
 class ProjectInDB(ProjectInDBBase):
     pass
+
+
+class AddMemberRequest(BaseModel):
+    user_id: int
+
+
+class AddMemberResponse(BaseModel):
+    project_id: int
+    user_id: int
+    message: str = "Member added successfully"
+
+
+class ProjectStats(BaseModel):
+    stats: Dict[str, int]

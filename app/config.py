@@ -1,11 +1,12 @@
-from typing import Any, List, Optional, Union
-from pydantic import AnyHttpUrl, field_validator, ValidationInfo
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import List, Optional, Union
 import secrets
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "River Flow Task Management"
+    PROJECT_NAME: str = "Task Management"
     API_V1_STR: str = "/api/v1"
 
     BACKEND_CORS_ORIGINS: List[str] = ["*"]
@@ -20,7 +21,6 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
 
-    # Database - supports both DATABASE_URL (cloud) or individual settings (local)
     DATABASE_URL: Optional[str] = None
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_USER: str = "postgres"
@@ -40,7 +40,6 @@ class Settings(BaseSettings):
 
         return f"postgresql://{encoded_user}:{encoded_password}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
-    # Redis
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
@@ -49,15 +48,13 @@ class Settings(BaseSettings):
     def REDIS_URI(self) -> str:
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
 
-    # Security
     SECRET_KEY: str = secrets.token_urlsafe(32)
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 10
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # Environment
-    ENVIRONMENT: str = "local"  # local, staging, production
+    ENVIRONMENT: str = "local"
 
-    # Agent / MCP
     GEMINI_API_KEY: str = ""
     API_BASE_URL: str = "http://localhost:8000"
 
