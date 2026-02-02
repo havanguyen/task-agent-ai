@@ -3,6 +3,7 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from sqlalchemy.orm import Session
+import chromadb
 
 from app.config import settings
 from app.models.task import Task
@@ -10,6 +11,7 @@ from app.models.project import Project
 
 _embeddings: Optional[GoogleGenerativeAIEmbeddings] = None
 _vector_store: Optional[Chroma] = None
+_chroma_client: Optional[chromadb.HttpClient] = None
 
 
 def get_embeddings() -> GoogleGenerativeAIEmbeddings:
@@ -21,13 +23,24 @@ def get_embeddings() -> GoogleGenerativeAIEmbeddings:
     return _embeddings
 
 
+def get_chroma_client() -> Optional[chromadb.HttpClient]:
+    """Get ChromaDB HTTP client if CHROMA_HOST is configured."""
+    global _chroma_client
+    if _chroma_client is None and settings.CHROMA_HOST:
+        _chroma_client = chromadb.HttpClient(
+            host=settings.CHROMA_HOST,
+            port=settings.CHROMA_PORT,
+        )
+    return _chroma_client
+
+
 def get_vector_store() -> Chroma:
     global _vector_store
     if _vector_store is None:
         _vector_store = Chroma(
+            client=get_chroma_client(),
             collection_name="tasks_collection",
             embedding_function=get_embeddings(),
-            persist_directory="./storage/chroma_db",
         )
     return _vector_store
 

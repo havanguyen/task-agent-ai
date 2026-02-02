@@ -61,16 +61,32 @@ class TestAgentTools:
                 create_task_tool,
                 update_task_tool,
                 project_stats_tool,
+                get_project_tool,
+                create_project_tool,
+                update_project_tool,
+                get_user_tool,
+                list_users_tool,
+                create_user_tool,
+                update_user_tool,
+                get_task_tool,
                 ToolContext,
             )
 
-            assert len(tools) == 5
+            assert len(tools) == 13
             # LangChain tools are StructuredTool objects, not directly callable
             assert hasattr(search_tasks_tool, "invoke")
             assert hasattr(list_tasks_tool, "invoke")
             assert hasattr(create_task_tool, "invoke")
             assert hasattr(update_task_tool, "invoke")
             assert hasattr(project_stats_tool, "invoke")
+            assert hasattr(get_project_tool, "invoke")
+            assert hasattr(create_project_tool, "invoke")
+            assert hasattr(update_project_tool, "invoke")
+            assert hasattr(get_user_tool, "invoke")
+            assert hasattr(list_users_tool, "invoke")
+            assert hasattr(create_user_tool, "invoke")
+            assert hasattr(update_user_tool, "invoke")
+            assert hasattr(get_task_tool, "invoke")
         except ImportError as e:
             pytest.skip(f"Agent dependencies not installed: {e}")
 
@@ -99,7 +115,7 @@ class TestAgentTools:
         try:
             from app.agent.tools import search_tasks_tool
 
-            with patch("app.agent.tools.search_tasks") as mock_search:
+            with patch("app.agent.tools.task_tools.search_tasks") as mock_search:
                 mock_search.return_value = "Task: Test Task. Status: todo."
 
                 # Invoke the tool

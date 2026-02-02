@@ -58,6 +58,9 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     API_BASE_URL: str = "http://localhost:8000"
 
+    CHROMA_HOST: Optional[str] = None
+    CHROMA_PORT: int = 8000
+
     model_config = SettingsConfigDict(
         case_sensitive=True, env_file=".env", extra="ignore"
     )

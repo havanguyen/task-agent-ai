@@ -1,28 +1,13 @@
-from typing import Optional, Any
-from datetime import datetime, timedelta
+"""Task-related agent tools."""
+
+from datetime import datetime
 
 from langchain_core.tools import tool
-from sqlalchemy.orm import Session
 
 from app.core.rag import search_tasks
 from app.models.task import Task, TaskStatus, TaskPriority
 from app.models.project import Project
-from app.models.user import User
-
-
-class ToolContext:
-    db: Optional[Session] = None
-    current_user: Optional[User] = None
-
-    @classmethod
-    def set_context(cls, db: Session, user: User):
-        cls.db = db
-        cls.current_user = user
-
-    @classmethod
-    def clear_context(cls):
-        cls.db = None
-        cls.current_user = None
+from app.agent.tools.base import ToolContext
 
 
 @tool
@@ -87,6 +72,7 @@ def create_task_tool(
 
     db = ToolContext.db
     user = ToolContext.current_user
+    from app.models.user import User
 
     project = None
     if project_name:
@@ -119,12 +105,14 @@ def create_task_tool(
             )
             .first()
         )
+
     priority_map = {
         "high": TaskPriority.HIGH,
         "medium": TaskPriority.MEDIUM,
         "low": TaskPriority.LOW,
     }
     task_priority = priority_map.get(priority.lower(), TaskPriority.MEDIUM)
+
     task_due_date = None
     if due_date:
         try:
@@ -163,6 +151,7 @@ def update_task_tool(task_title: str, new_status: str) -> str:
 
     db = ToolContext.db
     user = ToolContext.current_user
+
     task = (
         db.query(Task)
         .join(Project)
@@ -175,6 +164,7 @@ def update_task_tool(task_title: str, new_status: str) -> str:
 
     if not task:
         return f"❌ Task containing '{task_title}' not found."
+
     status_map = {
         "todo": TaskStatus.TODO,
         "in-progress": TaskStatus.IN_PROGRESS,
@@ -193,57 +183,46 @@ def update_task_tool(task_title: str, new_status: str) -> str:
 
 
 @tool
-def project_stats_tool(project_name: str = "") -> str:
-    """Use this tool to get statistics about projects and their tasks. project_name: Optional project name to get stats for. Leave empty for all projects."""
+def get_task_tool(task_identifier: str) -> str:
+    """Use this tool to get detailed information about a specific task. task_identifier: Task title or partial title."""
     if not ToolContext.db or not ToolContext.current_user:
         return "Error: Database context not available."
 
     db = ToolContext.db
     user = ToolContext.current_user
 
-    projects_query = db.query(Project).filter(
-        Project.organization_id == user.organization_id
+    task = (
+        db.query(Task)
+        .join(Project)
+        .filter(
+            Project.organization_id == user.organization_id,
+            Task.title.ilike(f"%{task_identifier}%"),
+        )
+        .first()
     )
 
-    if project_name:
-        projects_query = projects_query.filter(Project.name.ilike(f"%{project_name}%"))
+    if not task:
+        return f"❌ Task containing '{task_identifier}' not found."
 
-    projects = projects_query.limit(5).all()
+    assignee_name = task.assignee.full_name if task.assignee else "Unassigned"
+    project_name = task.project.name if task.project else "Unknown"
+    due_str = task.due_date.strftime("%Y-%m-%d") if task.due_date else "No due date"
 
-    if not projects:
-        return "No projects found."
-
-    stats_lines = []
-    for p in projects:
-        todo_count = (
-            db.query(Task)
-            .filter(Task.project_id == p.id, Task.status == TaskStatus.TODO)
-            .count()
-        )
-        in_progress_count = (
-            db.query(Task)
-            .filter(Task.project_id == p.id, Task.status == TaskStatus.IN_PROGRESS)
-            .count()
-        )
-        done_count = (
-            db.query(Task)
-            .filter(Task.project_id == p.id, Task.status == TaskStatus.DONE)
-            .count()
-        )
-
-        total = todo_count + in_progress_count + done_count
-        stats_lines.append(
-            f"📁 {p.name}: Todo={todo_count}, In Progress={in_progress_count}, "
-            f"Done={done_count}, Total={total}"
-        )
-
-    return "📊 Project Statistics:\n" + "\n".join(stats_lines)
+    return (
+        f"📋 **{task.title}** (ID: {task.id})\n"
+        f"Description: {task.description or 'No description'}\n"
+        f"Status: {task.status.value}\n"
+        f"Priority: {task.priority.value}\n"
+        f"Project: {project_name}\n"
+        f"Assigned to: {assignee_name}\n"
+        f"Due date: {due_str}"
+    )
 
 
-tools = [
+task_tools = [
     search_tasks_tool,
     list_tasks_tool,
     create_task_tool,
     update_task_tool,
-    project_stats_tool,
+    get_task_tool,
 ]
